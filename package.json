@@ -1,0 +1,23 @@
+{
+  "name": "telegram-auto-posting-bot",
+  "version": "1.0.0",
+  "description": "Production-ready Telegram Auto Posting system built with grammY (bot) and GramJS (userbot)",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "create-user": "node scripts/createUser.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.11.1",
+    "dotenv": "^16.4.5",
+    "grammy": "^1.21.1",
+    "node-cron": "^3.0.3",
+    "telegram": "^2.19.10"
+  }
+}

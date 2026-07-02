@@ -1,0 +1,80 @@
+import { telegramAccountService } from "../../services/telegramAccountService.js";
+import { authGuard } from "../middlewares/authGuard.js";
+import { mainMenu } from "../keyboards/mainMenu.js";
+import { logger } from "../../utils/logger.js";
+
+export function registerTelegramAccountHandler(bot) {
+  bot.hears("🔗 Telegram Account", authGuard, async (ctx) => {
+    if (telegramAccountService.hasLinkedAccount(ctx.session.dbUserId)) {
+      await ctx.reply(
+        "ℹ️ Telegram akkaunt allaqachon ulangan. Qayta ulash uchun telefon raqamingizni yuboring."
+      );
+    } else {
+      await ctx.reply("📱 Telefon raqamingizni xalqaro formatda yuboring (masalan: +998901234567):");
+    }
+    ctx.session.step = "tg_phone";
+  });
+
+  bot.on("message:text", authGuard, async (ctx, next) => {
+    const step = ctx.session.step;
+
+    if (step === "tg_phone") {
+      const phone = ctx.message.text.trim();
+      if (!/^\+\d{7,15}$/.test(phone)) {
+        await ctx.reply("❌ Noto'g'ri format. Telefon raqamni + bilan boshlab yuboring (masalan: +998901234567):");
+        return;
+      }
+
+      ctx.session.tgTemp = { phone };
+      const chatId = ctx.chat.id;
+      const userId = ctx.session.dbUserId;
+
+      await ctx.reply("⏳ Kod so'ralmoqda, biroz kuting...");
+
+      telegramAccountService.startLogin(chatId, userId, phone, {
+        onCodeRequested: async (isRetry) => {
+          ctx.session.step = "tg_code";
+          const text = isRetry
+            ? "❌ Kod noto'g'ri. Qaytadan tasdiqlash kodini kiriting:"
+            : "📩 Telegram'dan kelgan tasdiqlash kodini kiriting:";
+          await ctx.api.sendMessage(chatId, text);
+        },
+        onPasswordRequested: async (isRetry) => {
+          ctx.session.step = "tg_password";
+          const text = isRetry
+            ? "❌ Parol noto'g'ri. Qaytadan 2FA parolingizni kiriting:"
+            : "🔒 Ikki bosqichli parolingizni (2FA) kiriting:";
+          await ctx.api.sendMessage(chatId, text);
+        },
+        onSuccess: async () => {
+          ctx.session.step = "idle";
+          await ctx.api.sendMessage(chatId, "✅ Telegram akkaunt muvaffaqiyatli ulandi!", {
+            reply_markup: mainMenu,
+          });
+        },
+        onError: async (err) => {
+          ctx.session.step = "idle";
+          logger.error(`Telegram account link failed: ${err.message}`);
+          await ctx.api.sendMessage(chatId, `❌ Ulanishda xatolik: ${err.message}`, {
+            reply_markup: mainMenu,
+          });
+        },
+      });
+      return;
+    }
+
+    if (step === "tg_code") {
+      const ok = telegramAccountService.submitCode(ctx.chat.id, ctx.message.text.trim());
+      await ctx.reply(ok ? "⏳ Tekshirilmoqda..." : "⏳ Iltimos biroz kuting...");
+      return;
+    }
+
+    if (step === "tg_password") {
+      const ok = telegramAccountService.submitPassword(ctx.chat.id, ctx.message.text.trim());
+      await ctx.reply(ok ? "⏳ Tekshirilmoqda..." : "⏳ Iltimos biroz kuting...");
+      return;
+    }
+
+    await next();
+  });
+}
