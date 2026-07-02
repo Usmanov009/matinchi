@@ -12,8 +12,8 @@ const FRIENDLY_ERRORS = {
 };
 
 function friendlyErrorMessage(err) {
-  const code = Object.keys(FRIENDLY_ERRORS).find((key) => err.message?.includes(key));
-  return code ? FRIENDLY_ERRORS[code] : `❌ Ulanishda xatolik: ${err.message}`;
+  const code = err.errorMessage ?? Object.keys(FRIENDLY_ERRORS).find((key) => err.message?.includes(key));
+  return FRIENDLY_ERRORS[code] ?? `❌ Ulanishda xatolik: ${err.message}`;
 }
 
 export function registerTelegramAccountHandler(bot) {

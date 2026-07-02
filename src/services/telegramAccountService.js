@@ -80,8 +80,17 @@ export const telegramAccountService = {
           });
         },
         onError: async (err) => {
-          if (pending.cancelled) return false;
+          if (pending.cancelled) return true;
           logger.error(`GramJS auth error (chat ${chatId}): ${err.message}`);
+
+          // GramJS's internal retry loop reuses the same phoneCodeHash from the
+          // original sendCode() call — it never requests a new one. Once that
+          // hash expires, retrying with any code fails forever, so returning
+          // `false` here (meaning "keep retrying") would loop pointlessly.
+          // Returning `true` stops the loop and surfaces the error to
+          // startLogin()'s .catch(), which tells the user to restart the flow.
+          if (err.errorMessage === "PHONE_CODE_EXPIRED") return true;
+
           return false;
         },
       })
