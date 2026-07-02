@@ -25,6 +25,8 @@ export const env = {
   DB_PATH: process.env.DB_PATH ?? "./data/database.sqlite",
   LOG_DIR: process.env.LOG_DIR ?? "./logs",
   GROUP_POST_DELAY_MS: Number(process.env.GROUP_POST_DELAY_MS ?? 60000),
+  BOOTSTRAP_USERNAME: process.env.BOOTSTRAP_USERNAME ?? null,
+  BOOTSTRAP_PASSWORD: process.env.BOOTSTRAP_PASSWORD ?? null,
 };
 
 if (env.ENCRYPTION_KEY.length !== 64) {

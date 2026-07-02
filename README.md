@@ -70,6 +70,13 @@ scripts/createUser.js        birinchi login/parolni yaratish uchun CLI
    Bot ishga tushgandan keyin qo'shimcha foydalanuvchilarni admin
    `/newuser <login> <parol>` buyrug'i orqali yaratishi mumkin.
 
+   **Ephemeral disk bo'lgan platformalarda (masalan Render bepul tarifi):**
+   har bir redeploy/restart'da SQLite fayli o'chib ketadi, shu bilan birga
+   yuqoridagi CLI orqali yaratilgan login ham yo'qoladi. Buning o'rniga
+   `.env` (yoki platforma Environment sozlamalarida) `BOOTSTRAP_USERNAME` va
+   `BOOTSTRAP_PASSWORD` ni belgilang — bot har safar ishga tushganda, agar
+   shu login mavjud bo'lmasa, uni avtomatik qayta yaratadi.
+
 4. Botni ishga tushiring:
 
    ```bash
