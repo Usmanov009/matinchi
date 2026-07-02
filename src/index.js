@@ -3,9 +3,12 @@ import { logger } from "./utils/logger.js";
 import "./db/database.js";
 import { adminRepository } from "./repositories/adminRepository.js";
 import { createBot } from "./bot/bot.js";
+import { startHealthServer } from "./web/healthServer.js";
 
 async function main() {
   adminRepository.syncFromEnv(env.ADMIN_IDS);
+
+  startHealthServer();
 
   const bot = createBot();
 
