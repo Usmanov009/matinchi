@@ -3,6 +3,19 @@ import { authGuard } from "../middlewares/authGuard.js";
 import { mainMenu } from "../keyboards/mainMenu.js";
 import { logger } from "../../utils/logger.js";
 
+const FRIENDLY_ERRORS = {
+  PHONE_CODE_EXPIRED:
+    "❌ Tasdiqlash kodining muddati tugadi. Iltimos, 🔗 Telegram Account tugmasini qaytadan bosib, yangi kod so'rang.",
+  PHONE_CODE_INVALID: "❌ Kod noto'g'ri kiritildi. 🔗 Telegram Account tugmasini qaytadan bosib, qaytadan urinib ko'ring.",
+  PHONE_NUMBER_INVALID: "❌ Telefon raqami noto'g'ri. 🔗 Telegram Account tugmasini qaytadan bosib, to'g'ri raqam kiriting.",
+  PASSWORD_HASH_INVALID: "❌ 2FA parol noto'g'ri. 🔗 Telegram Account tugmasini qaytadan bosib, qaytadan urinib ko'ring.",
+};
+
+function friendlyErrorMessage(err) {
+  const code = Object.keys(FRIENDLY_ERRORS).find((key) => err.message?.includes(key));
+  return code ? FRIENDLY_ERRORS[code] : `❌ Ulanishda xatolik: ${err.message}`;
+}
+
 export function registerTelegramAccountHandler(bot) {
   bot.hears("🔗 Telegram Account", authGuard, async (ctx) => {
     if (telegramAccountService.hasLinkedAccount(ctx.session.dbUserId)) {
@@ -55,9 +68,7 @@ export function registerTelegramAccountHandler(bot) {
         onError: async (err) => {
           ctx.session.step = "idle";
           logger.error(`Telegram account link failed: ${err.message}`);
-          await ctx.api.sendMessage(chatId, `❌ Ulanishda xatolik: ${err.message}`, {
-            reply_markup: mainMenu,
-          });
+          await ctx.api.sendMessage(chatId, friendlyErrorMessage(err), { reply_markup: mainMenu });
         },
       });
       return;

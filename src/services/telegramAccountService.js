@@ -18,28 +18,48 @@ export const telegramAccountService = {
     return pendingLogins.has(chatId);
   },
 
-  cancelLogin(chatId) {
+  /**
+   * Tears down a pending login attempt and waits for the client to fully
+   * disconnect before returning. This must complete before a new client for
+   * the same chat starts, otherwise the abandoned client can still be mid-flight
+   * (e.g. about to call sendCode) and race with the new one — which invalidates
+   * both codes and throws "Cannot send requests while disconnected".
+   */
+  async cancelLogin(chatId) {
     const pending = pendingLogins.get(chatId);
     if (!pending) return;
+
+    pending.cancelled = true;
     if (pending.codeDeferred) pending.codeDeferred.reject(new Error("cancelled"));
     if (pending.passwordDeferred) pending.passwordDeferred.reject(new Error("cancelled"));
-    pending.client.destroy().catch(() => {});
     pendingLogins.delete(chatId);
+
+    try {
+      await pending.client.destroy();
+    } catch {
+      // already disconnected/destroyed — nothing to do
+    }
   },
 
   /**
    * Kicks off an interactive GramJS login. The phoneCode/password callbacks only
    * resolve once submitCode()/submitPassword() are called from the bot's message
-   * handlers, so this function returns immediately — completion is reported via
-   * the onSuccess/onError callbacks.
+   * handlers, so this function's returned promise only resolves once the previous
+   * attempt (if any) has been fully cancelled — completion of the login itself is
+   * reported via the onSuccess/onError callbacks.
    */
-  startLogin(chatId, userId, phoneNumber, { onCodeRequested, onPasswordRequested, onSuccess, onError }) {
-    if (pendingLogins.has(chatId)) {
-      this.cancelLogin(chatId);
-    }
+  async startLogin(chatId, userId, phoneNumber, { onCodeRequested, onPasswordRequested, onSuccess, onError }) {
+    await this.cancelLogin(chatId);
 
     const client = createClient();
-    const pending = { client, codeDeferred: null, passwordDeferred: null, codeAttempts: 0, passwordAttempts: 0 };
+    const pending = {
+      client,
+      codeDeferred: null,
+      passwordDeferred: null,
+      codeAttempts: 0,
+      passwordAttempts: 0,
+      cancelled: false,
+    };
     pendingLogins.set(chatId, pending);
 
     client
@@ -60,21 +80,26 @@ export const telegramAccountService = {
           });
         },
         onError: async (err) => {
+          if (pending.cancelled) return false;
           logger.error(`GramJS auth error (chat ${chatId}): ${err.message}`);
           return false;
         },
       })
       .then(async () => {
+        if (pending.cancelled) return;
+
         const sessionString = client.session.save();
         const encrypted = encrypt(sessionString);
         sessionRepository.upsert({ userId, phoneNumber, sessionEncrypted: encrypted });
         activeClients.set(userId, client);
-        pendingLogins.delete(chatId);
+        if (pendingLogins.get(chatId) === pending) pendingLogins.delete(chatId);
         logRepository.add(userId, "info", "Telegram akkaunt muvaffaqiyatli ulandi");
         await onSuccess();
       })
       .catch(async (err) => {
-        pendingLogins.delete(chatId);
+        if (pending.cancelled) return;
+
+        if (pendingLogins.get(chatId) === pending) pendingLogins.delete(chatId);
         client.destroy().catch(() => {});
         logRepository.add(userId, "error", `Telegram login xatoligi: ${err.message}`);
         await onError(err);
