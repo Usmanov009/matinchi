@@ -8,6 +8,10 @@ const FRIENDLY_ERRORS = {
     "❌ Tasdiqlash kodining muddati tugadi. Iltimos, 🔗 Telegram Account tugmasini qaytadan bosib, yangi kod so'rang.",
   PHONE_CODE_INVALID: "❌ Kod noto'g'ri kiritildi. 🔗 Telegram Account tugmasini qaytadan bosib, qaytadan urinib ko'ring.",
   PHONE_NUMBER_INVALID: "❌ Telefon raqami noto'g'ri. 🔗 Telegram Account tugmasini qaytadan bosib, to'g'ri raqam kiriting.",
+  PHONE_NUMBER_BANNED: "❌ Ushbu telefon raqami Telegram tomonidan cheklangan. Iltimos, boshqa raqamdan urinib ko'ring.",
+  PHONE_NUMBER_FLOOD: "❌ Telefon raqamiga kod juda tez so'ralmoqda. Bir necha daqiqadan so'ng qaytadan urinib ko'ring.",
+  AUTH_USER_CANCEL: "❌ Telegram avtorizatsiya bekor qilindi. Agar qayta ulash kerak bo'lsa, 🔗 Telegram Account tugmasini qaytadan bosing.",
+  "wait of": "❌ Telegram serveri vaqtinchalik kutishni talab qilmoqda. Iltimos, birozdan so'ng qayta urinib ko'ring.",
   PASSWORD_HASH_INVALID: "❌ 2FA parol noto'g'ri. 🔗 Telegram Account tugmasini qaytadan bosib, qaytadan urinib ko'ring.",
 };
 
