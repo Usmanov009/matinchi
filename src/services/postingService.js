@@ -1,4 +1,3 @@
-import cron from "node-cron";
 import { Api } from "telegram";
 import { env } from "../config/env.js";
 import { logger } from "../utils/logger.js";
@@ -104,29 +103,40 @@ export const postingService = {
 
     const user = userRepository.findById(userId);
     const minutes = Math.max(1, user?.interval_minutes ?? 5);
-    const cronExpression = `*/${minutes} * * * *`;
+    const delayMs = minutes * 60_000;
+    const taskId = Symbol("posting-task");
 
-    const task = cron.schedule(cronExpression, () => {
-      runPostingCycle(userId).catch((err) => {
+    const scheduleNext = () => {
+      const timeout = setTimeout(() => {
+        cycle();
+      }, delayMs);
+      scheduledTasks.set(userId, { taskId, timeout });
+    };
+
+    const cycle = async () => {
+      await runPostingCycle(userId).catch((err) => {
         logger.error(`Posting cycle error for user ${userId}: ${err.message}`);
       });
-    });
 
-    scheduledTasks.set(userId, task);
+      const entry = scheduledTasks.get(userId);
+      if (entry?.taskId === taskId) {
+        scheduleNext();
+      }
+    };
+
+    scheduledTasks.set(userId, { taskId, timeout: null });
     userRepository.setPostingActive(userId, true);
     logRepository.add(userId, "info", `Posting ishga tushirildi (har ${minutes} daqiqada)`);
 
-    runPostingCycle(userId).catch((err) => {
-      logger.error(`Initial posting cycle error for user ${userId}: ${err.message}`);
-    });
+    cycle();
   },
 
   stop(userId) {
-    const task = scheduledTasks.get(userId);
-    if (task) {
-      task.stop();
-      scheduledTasks.delete(userId);
+    const entry = scheduledTasks.get(userId);
+    if (entry?.timeout) {
+      clearTimeout(entry.timeout);
     }
+    scheduledTasks.delete(userId);
     userRepository.setPostingActive(userId, false);
     logRepository.add(userId, "info", "Posting to'xtatildi");
   },

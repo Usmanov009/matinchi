@@ -77,7 +77,7 @@ scripts/createUser.js        birinchi login/parolni yaratish uchun CLI
    `BOOTSTRAP_PASSWORD_1`, `BOOTSTRAP_USERNAME_2` / `BOOTSTRAP_PASSWORD_2` va
    hokazo tarzda bir nechta admin login/parol juftligini belgilang — bot har
    safar ishga tushganda, agar shu loginlar mavjud bo'lmasa, ularni avtomatik
-   qayta yaratadi. Har bir juftlik uchun alohida raqam (`_1`, `_2`, `_3`, ...)
+   qayta yaratadi. Har bir juftlik uchun alohida raqam (`_1`, `_2`, ... , `_8`)
    ishlatiladi, shuning uchun har bir admin o'zining login/parolidan
    foydalanadi.
 

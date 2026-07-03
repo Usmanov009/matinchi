@@ -50,7 +50,7 @@ export const env = {
   ADMIN_IDS: adminIds,
   DB_PATH: process.env.DB_PATH ?? "./data/database.sqlite",
   LOG_DIR: process.env.LOG_DIR ?? "./logs",
-  GROUP_POST_DELAY_MS: Number(process.env.GROUP_POST_DELAY_MS ?? 60000),
+  GROUP_POST_DELAY_MS: Number(process.env.GROUP_POST_DELAY_MS ?? 30000),
   BOOTSTRAP_USERS: loadBootstrapUsers(),
 };
 
