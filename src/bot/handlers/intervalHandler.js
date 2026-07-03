@@ -8,7 +8,7 @@ export function registerIntervalHandler(bot) {
     await ctx.reply("⏰ Reklama har necha minutda yuborilsin?", { reply_markup: intervalKeyboard });
   });
 
-  bot.callbackQuery(/^interval_(5|10)$/, authGuard, async (ctx) => {
+  bot.callbackQuery(/^interval_(3|5|10|15)$/, authGuard, async (ctx) => {
     const minutes = Number(ctx.match[1]);
     const userId = ctx.session.dbUserId;
 
