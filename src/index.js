@@ -9,22 +9,22 @@ import { startHealthServer } from "./web/healthServer.js";
 
 // On platforms with an ephemeral filesystem (e.g. Render's free tier), the
 // SQLite file is wiped on every redeploy/restart, so any manually created
-// login would disappear. If BOOTSTRAP_USERNAME/BOOTSTRAP_PASSWORD are set,
-// recreate that login on boot whenever it's missing.
-async function bootstrapAdminUser() {
-  if (!env.BOOTSTRAP_USERNAME || !env.BOOTSTRAP_PASSWORD) return;
+// login would disappear. If BOOTSTRAP_USERNAME_1/BOOTSTRAP_PASSWORD_1 (etc.)
+// are set, recreate each of those logins on boot whenever it's missing.
+async function bootstrapAdminUsers() {
+  for (const { username, password } of env.BOOTSTRAP_USERS) {
+    const existing = userRepository.findByUsername(username);
+    if (existing) continue;
 
-  const existing = userRepository.findByUsername(env.BOOTSTRAP_USERNAME);
-  if (existing) return;
-
-  const passwordHash = await hashPassword(env.BOOTSTRAP_PASSWORD);
-  userRepository.create({ username: env.BOOTSTRAP_USERNAME, passwordHash });
-  logger.info(`Bootstrap user "${env.BOOTSTRAP_USERNAME}" created from environment variables`);
+    const passwordHash = await hashPassword(password);
+    userRepository.create({ username, passwordHash });
+    logger.info(`Bootstrap user "${username}" created from environment variables`);
+  }
 }
 
 async function main() {
   adminRepository.syncFromEnv(env.ADMIN_IDS);
-  await bootstrapAdminUser();
+  await bootstrapAdminUsers();
 
   startHealthServer();
 

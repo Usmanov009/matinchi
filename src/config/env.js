@@ -16,6 +16,32 @@ const adminIds = (process.env.ADMIN_IDS ?? "")
   .filter(Boolean)
   .map(Number);
 
+// Supports both the legacy unsuffixed BOOTSTRAP_USERNAME/BOOTSTRAP_PASSWORD
+// (treated as admin #1) and numbered BOOTSTRAP_USERNAME_1..N / BOOTSTRAP_PASSWORD_1..N
+// so multiple bootstrap admin logins can be configured, each with its own credentials.
+function loadBootstrapUsers() {
+  const users = [];
+  const seen = new Set();
+
+  const legacyUsername = process.env.BOOTSTRAP_USERNAME?.trim();
+  const legacyPassword = process.env.BOOTSTRAP_PASSWORD?.trim();
+  if (legacyUsername && legacyPassword) {
+    users.push({ username: legacyUsername, password: legacyPassword });
+    seen.add(legacyUsername);
+  }
+
+  for (let i = 1; i <= 20; i++) {
+    const username = process.env[`BOOTSTRAP_USERNAME_${i}`]?.trim();
+    const password = process.env[`BOOTSTRAP_PASSWORD_${i}`]?.trim();
+    if (!username || !password) continue;
+    if (seen.has(username)) continue;
+    seen.add(username);
+    users.push({ username, password });
+  }
+
+  return users;
+}
+
 export const env = {
   BOT_TOKEN: required("BOT_TOKEN"),
   TELEGRAM_API_ID: Number(required("TELEGRAM_API_ID")),
@@ -25,8 +51,7 @@ export const env = {
   DB_PATH: process.env.DB_PATH ?? "./data/database.sqlite",
   LOG_DIR: process.env.LOG_DIR ?? "./logs",
   GROUP_POST_DELAY_MS: Number(process.env.GROUP_POST_DELAY_MS ?? 60000),
-  BOOTSTRAP_USERNAME: process.env.BOOTSTRAP_USERNAME ?? null,
-  BOOTSTRAP_PASSWORD: process.env.BOOTSTRAP_PASSWORD ?? null,
+  BOOTSTRAP_USERS: loadBootstrapUsers(),
 };
 
 if (env.ENCRYPTION_KEY.length !== 64) {

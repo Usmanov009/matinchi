@@ -73,9 +73,13 @@ scripts/createUser.js        birinchi login/parolni yaratish uchun CLI
    **Ephemeral disk bo'lgan platformalarda (masalan Render bepul tarifi):**
    har bir redeploy/restart'da SQLite fayli o'chib ketadi, shu bilan birga
    yuqoridagi CLI orqali yaratilgan login ham yo'qoladi. Buning o'rniga
-   `.env` (yoki platforma Environment sozlamalarida) `BOOTSTRAP_USERNAME` va
-   `BOOTSTRAP_PASSWORD` ni belgilang — bot har safar ishga tushganda, agar
-   shu login mavjud bo'lmasa, uni avtomatik qayta yaratadi.
+   `.env` (yoki platforma Environment sozlamalarida) `BOOTSTRAP_USERNAME_1` /
+   `BOOTSTRAP_PASSWORD_1`, `BOOTSTRAP_USERNAME_2` / `BOOTSTRAP_PASSWORD_2` va
+   hokazo tarzda bir nechta admin login/parol juftligini belgilang — bot har
+   safar ishga tushganda, agar shu loginlar mavjud bo'lmasa, ularni avtomatik
+   qayta yaratadi. Har bir juftlik uchun alohida raqam (`_1`, `_2`, `_3`, ...)
+   ishlatiladi, shuning uchun har bir admin o'zining login/parolidan
+   foydalanadi.
 
 4. Botni ishga tushiring:
 
